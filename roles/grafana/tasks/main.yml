@@ -24,6 +24,9 @@
     group: nginx
     mode: 0644
 
+- name: tell selinux to allow local connection to grafana-server
+  command: semanage port -a -t http_port_t -p tcp 3000
+
 - name: restart nginx
   systemd:
     state: restarted

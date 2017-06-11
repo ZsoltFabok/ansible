@@ -2,11 +2,12 @@
 PIDFile=/run/graphite-carbon/pid
 User=graphite
 Group=graphite
-RuntimeDirectory={{graphite_home}}/webapp
 WorkingDirectory={{graphite_home}}/webapp
-ExecStart={{graphite_home}}/bin/python {{graphite_home}}/bin/carbon-cache.py start
-ExecStop={{graphite_home}}/bin/python {{graphite_home}}/bin/carbon-cache.py stop
-PrivateTmp=true
+ExecStart={{graphite_home}}/bin/carbon-cache.py --pidfile=/opt/graphite/storage/carbon-cache-%i.pid start
+ExecStop={{graphite_home}}/bin/carbon-cache.py --pidfile=/opt/graphite/storage/carbon-cache-%i.pid stop
+Type=forking
+PIDFile=/opt/graphite/storage/carbon-cache-%i.pid
+LimitNOFILE=128000
 
 [Install]
 WantedBy=multi-user.target

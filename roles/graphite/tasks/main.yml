@@ -2,7 +2,6 @@
 - name: create graphite user
   user:
     name: graphite
-    group: graphite
 
 - name: create graphite home directory
   file:
@@ -15,7 +14,7 @@
 - name: install python devel
   yum:
     state: present
-    name: {{ item }}
+    name: "{{item}}"
   with_items:
     - python-virtualenv
     - python-devel
@@ -98,17 +97,30 @@
     owner: graphite
     group: graphite
 
+- name: Make manage.py executable
+  file:
+    path: "{{graphite_home}}/webapp/graphite/manage.py"
+    mode: u+x
+
 - name: setup database
+  become: True
+  become_user: graphite
   django_manage:
     command: syncdb
     app_path: "{{graphite_home}}/webapp/graphite"
-    settings: "{{graphite_home}}/webapp/graphite/settings.py"
-    pythonpath: "{{graphite_home}}/bin/python"
     virtualenv: "{{graphite_home}}"
 
 - name: create folder for logs
   file:
     path: "{{graphite_home}}/log"
+    owner: graphite
+    group: graphite
+    mode: 0755
+    state: directory
+
+- name: create folder for webapp logs
+  file:
+    path: "{{graphite_home}}/log/webapp"
     owner: graphite
     group: graphite
     mode: 0755
@@ -138,14 +150,15 @@
 
 - name: enable carbon access on the firewall
   firewalld:
-    service: 2003/tcp
+    port: 2003/tcp
     permanent: true
-    zone: public
     state: enabled
 
 - name: enable graphite-web access on the firewall
   firewalld:
-    service: 8000/tcp
+    port: 8000/tcp
     permanent: true
-    zone: public
     state: enabled
+
+- name: activate changes in firewall
+  command: firewall-cmd --reload

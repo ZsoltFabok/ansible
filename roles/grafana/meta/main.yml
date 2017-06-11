@@ -1,4 +1,5 @@
 ---
-grafana dependencies
+# grafana dependencies
+
 dependencies:
   - {role: nginx}

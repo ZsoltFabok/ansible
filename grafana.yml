@@ -1,5 +1,8 @@
 ---
 - hosts: centos
   remote_user: root
+  vars:
+    - release_version: 7
+    - base_arch: x86_64
   roles:
     - roles/grafana

@@ -2,7 +2,6 @@
 PIDFile=/run/graphite-web/pid
 User=graphite
 Group=graphite
-RuntimeDirectory={{graphite_home}}/webapp
 WorkingDirectory={{graphite_home}}/webapp
 ExecStart={{graphite_home}}/bin/gunicorn -u graphite -g graphite -b 0.0.0.0:8000 --log-file={{graphite_home}}/log/gunicorn.log wsgi:application
 ExecReload=/bin/kill -s HUP $MAINPID
