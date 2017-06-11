@@ -1,0 +1,30 @@
+- name: install grafana
+  yum:
+    name: https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.3.1-1.x86_64.rpm
+    state: present
+
+- name: copy grafana.ini
+  template:
+    src: grafana.ini.j2
+    dest: "/etc/grafana/grafana.ini"
+    owner: grafana
+    group: grafana
+    mode: 0644
+
+- name: restart grafana
+  systemd:
+    state: restarted
+    name: grafana-server
+
+- name: add grafana to nginx
+  template:
+    src: nginx-grafana.conf.j2
+    dest: "/etc/nginx/default.d/grafana.conf"
+    owner: nginx
+    group: nginx
+    mode: 0644
+
+- name: restart nginx
+  systemd:
+    state: restarted
+    name: nginx

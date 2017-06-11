@@ -1,0 +1,151 @@
+---
+- name: create graphite user
+  user:
+    name: graphite
+    group: graphite
+
+- name: create graphite home directory
+  file:
+    path: "{{graphite_home}}"
+    mode: 0755
+    owner: graphite
+    group: graphite
+    state: directory
+
+- name: install python devel
+  yum:
+    state: present
+    name: {{ item }}
+  with_items:
+    - python-virtualenv
+    - python-devel
+    - libffi-devel
+    - gcc
+
+- name: install graphite (copy requirements.txt)
+  become: True
+  become_user: graphite
+  template:
+    src: requirements.txt.j2
+    dest: "{{graphite_home}}/requirements.txt"
+    owner: graphite
+    group: graphite
+    mode: 0644
+
+- name: install graphite (run pip install)
+  become: True
+  become_user: graphite
+  pip: 
+    requirements: "{{graphite_home}}/requirements.txt"
+    virtualenv: "{{graphite_home}}"
+    extra_args: "--ignore-installed"
+
+- name: create folder for example configuration files
+  file:
+    path: "{{graphite_home}}/conf/examples"
+    owner: graphite
+    group: graphite
+    mode: 0755
+    state: directory
+
+- name: move example configuration files to examples folder
+  become: True
+  become_user: graphite
+  shell: "mv {{graphite_home}}/conf/*.example {{graphite_home}}/conf/examples"
+
+- name: configure graphite (local_settings.py)
+  template:
+    src: local_settings.py.j2
+    dest: "{{graphite_home}}/webapp/graphite/local_settings.py"
+    owner: graphite
+    group: graphite
+
+- name: configure graphite (storage-schemas.conf)   
+  template:
+    src: storage-schemas.conf.j2
+    dest: "{{graphite_home}}/conf/storage-schemas.conf"
+    owner: graphite
+    group: graphite
+
+- name: configure graphite (storage-aggregation.conf)
+  copy:
+    src: "{{graphite_home}}/conf/examples/storage-aggregation.conf.example"
+    dest: "{{graphite_home}}/conf/storage-aggregation.conf"
+    owner: graphite
+    group: graphite
+    remote_src: True
+
+- name: configure graphite (graphTemplates.conf)   
+  copy:
+    src: "{{graphite_home}}/conf/examples/graphTemplates.conf.example"
+    dest: "{{graphite_home}}/conf/graphTemplates.conf"
+    owner: graphite
+    group: graphite
+    remote_src: True
+
+- name: configure graphite (wsgi.py)
+  copy:
+    src: "{{graphite_home}}/conf/examples/graphite.wsgi.example"
+    dest: "{{graphite_home}}/webapp/wsgi.py"
+    owner: graphite
+    group: graphite
+    remote_src: True
+
+- name: configure graphite (carbon.conf)   
+  template:
+    src: "carbon.conf.j2"
+    dest: "{{graphite_home}}/conf/carbon.conf"
+    owner: graphite
+    group: graphite
+
+- name: setup database
+  django_manage:
+    command: syncdb
+    app_path: "{{graphite_home}}/webapp/graphite"
+    settings: "{{graphite_home}}/webapp/graphite/settings.py"
+    pythonpath: "{{graphite_home}}/bin/python"
+    virtualenv: "{{graphite_home}}"
+
+- name: create folder for logs
+  file:
+    path: "{{graphite_home}}/log"
+    owner: graphite
+    group: graphite
+    mode: 0755
+    state: directory
+
+- name: create graphite-web service
+  template:
+    src: graphite-web.service.j2
+    dest: /lib/systemd/system/graphite-web.service
+
+- name: start graphite-web service
+  systemd:
+    state: started
+    daemon_reload: yes
+    name: graphite-web
+
+- name: create graphite-carbon service
+  template:
+    src: graphite-carbon.service.j2
+    dest: /lib/systemd/system/graphite-carbon.service
+
+- name: start graphite-carbon service
+  systemd:
+    state: started
+    daemon_reload: yes
+    name: graphite-carbon
+
+- name: enable carbon access on the firewall
+  firewalld:
+    service: 2003/tcp
+    permanent: true
+    zone: public
+    state: enabled
+
+- name: enable graphite-web access on the firewall
+  firewalld:
+    service: 8000/tcp
+    permanent: true
+    zone: public
+    state: enabled

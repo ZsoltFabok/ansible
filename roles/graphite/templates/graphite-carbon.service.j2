@@ -1,0 +1,12 @@
+[Service]
+PIDFile=/run/graphite-carbon/pid
+User=graphite
+Group=graphite
+RuntimeDirectory={{graphite_home}}/webapp
+WorkingDirectory={{graphite_home}}/webapp
+ExecStart={{graphite_home}}/bin/python {{graphite_home}}/bin/carbon-cache.py start
+ExecStop={{graphite_home}}/bin/python {{graphite_home}}/bin/carbon-cache.py stop
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

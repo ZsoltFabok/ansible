@@ -1,0 +1,4 @@
+---
+grafana dependencies
+dependencies:
+  - {role: nginx}

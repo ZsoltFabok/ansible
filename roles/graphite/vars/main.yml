@@ -1,0 +1,3 @@
+---
+secret_key: "{{ ansible_date_time | hash('sha1') }}"
+graphite_home: /opt/graphite
