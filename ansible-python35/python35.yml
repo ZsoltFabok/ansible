@@ -1,0 +1,7 @@
+---
+- hosts: centos
+  remote_user: root
+  vars:
+    - python_version: 3.5.3
+  roles:
+    - roles/python35

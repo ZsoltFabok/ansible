@@ -1,0 +1,42 @@
+---
+# downloads and installs python35
+- name: install libraries for compiling python
+  yum:
+    state: present
+    name: "{{item}}"
+  with_items:
+    - zlib-devel
+    - openssl
+    - openssl-devel
+    - libsqlite3x-devel
+
+- name: download python source
+  get_url:
+    url: "https://www.python.org/ftp/python/{{python_version}}/Python-{{python_version}}.tgz"
+    dest: /tmp/python.tar.gz
+    checksum: "md5:6192f0e45f02575590760e68c621a488"
+
+- name: extract source
+  unarchive:
+    src: /tmp/python.tar.gz
+    dest: /tmp
+    remote_src: True
+
+- name: configure
+  shell: ./configure
+  args:
+    chdir: "/tmp/Python-{{python_version}}"
+
+- name: make and install
+  make:
+    chdir: "/tmp/Python-{{python_version}}"
+    target: install
+  become: yes
+
+- name: remove tmp folder and downloaded tar.gz
+  file:
+    path: "{{item}}"
+    state: absent
+  with_items:
+    - /tmp/Python.tar.xz
+    - "/tmp/Python-{{python_version}}"
