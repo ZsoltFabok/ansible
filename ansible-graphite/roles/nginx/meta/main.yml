@@ -1,4 +1,0 @@
----
-# graphite dependencies
-dependencies:
-  - {role: epel_repository}
