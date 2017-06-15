@@ -1,0 +1,2 @@
+---
+pi_new_password: "{{ ansible_date_time | hash('sha1') }}"

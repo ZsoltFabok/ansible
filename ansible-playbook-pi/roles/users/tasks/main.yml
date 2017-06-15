@@ -1,0 +1,48 @@
+---
+- name: create user zsolt
+  user:
+    name: zsolt
+
+- name: add ssh public key(s) to zsolt
+  authorized_key:
+    user: zsolt
+    state: present
+    key: "{{ lookup('file', item) }}"
+  with_fileglob:
+    - "{{public_keys_folder}}/*id_rsa.pub"
+
+- name: add ssh public key(s) to root
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ lookup('file', item) }}"
+  with_fileglob:
+    - "{{public_keys_folder}}/*id_rsa.pub"
+
+- name: allow only public private login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    insertafter: '^#PasswordAuthentication yes'
+    line: 'PasswordAuthentication no'
+  notify: restart sshd
+
+- name: disable pi user
+  user:
+    name: pi
+    password: "{{pi_new_password}}"
+    shell: "/bin/false"
+
+- name: revoke pi users sudo privileges
+  file:
+   path: /etc/sudoers.d/010_pi-nopasswd
+   state: absent
+
+- name: delete public keys from pi user
+  file:
+   path: /home/pi/.ssh/authorized_keys
+   state: absent
+
+- name: add sudo rights to zsolt
+  template:
+    src: 010_zsolt-nopasswd.j2
+    dest: /etc/sudoers.d/010_zsolt-nopassword
