@@ -2,5 +2,5 @@
 - hosts: pi
   remote_user: root
   roles:
-  #  - roles/users
-    - roles/packages
+    - roles/users
+    # - roles/packages

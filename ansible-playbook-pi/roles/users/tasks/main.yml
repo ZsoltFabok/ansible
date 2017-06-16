@@ -2,47 +2,65 @@
 - name: create user zsolt
   user:
     name: zsolt
+  tags: ['setup']
 
-- name: add ssh public key(s) to zsolt
+- name: add ssh pem key to zsolt
   authorized_key:
     user: zsolt
     state: present
-    key: "{{ lookup('file', item) }}"
-  with_fileglob:
-    - "{{public_keys_folder}}/*id_rsa.pub"
+    key: "{{ lookup('file', pem_file) }}" # comes from the command line
+  tags: ['setup']
 
-- name: add ssh public key(s) to root
+- name: add ssh pem key to root
   authorized_key:
     user: root
     state: present
-    key: "{{ lookup('file', item) }}"
-  with_fileglob:
-    - "{{public_keys_folder}}/*id_rsa.pub"
+    key: "{{ lookup('file', pem_file) }}" # comes from the command line
+  tags: ['setup']
 
-- name: allow only public private login
+- name: allow only public key based login over ssh
   lineinfile:
     path: /etc/ssh/sshd_config
     insertafter: '^#PasswordAuthentication yes'
     line: 'PasswordAuthentication no'
   notify: restart sshd
+  tags: ['setup']
 
 - name: disable pi user
   user:
     name: pi
     password: "{{pi_new_password}}"
     shell: "/bin/false"
+  tags: ['setup']
 
 - name: revoke pi users sudo privileges
   file:
    path: /etc/sudoers.d/010_pi-nopasswd
    state: absent
+  tags: ['setup']
 
 - name: delete public keys from pi user
   file:
    path: /home/pi/.ssh/authorized_keys
    state: absent
+  tags: ['setup']
 
 - name: add sudo rights to zsolt
   template:
     src: 010_zsolt-nopasswd.j2
     dest: /etc/sudoers.d/010_zsolt-nopassword
+  tags: ['setup', 'sudo']
+
+- name: update history in bashrc
+  become: True
+  become_user: zsolt
+  replace:
+    path: "/home/zsolt/.bashrc"
+    regexp: "{{item.key}}"
+    replace: "{{item.value}}"
+    backup: yes
+  with_items:
+    - { key: 'HISTCONTROL=ignoreboth', value: "HISTCONTROL='ignorespace:ignoreboth:ereasdups'" }
+    - { key: 'HISTSIZE=1000', value: "HISTSIZE=-1" }
+    - { key: 'HISTFILESIZE=2000', value: "HISTFILESIZE=-1\nHISTIGNORE='rm *:m *:mplayer *:ls*:cp*:mv*:cd*'"}
+  tags: ['setup', 'bash']
