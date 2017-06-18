@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+mkdir -p /home/zsolt/Dropbox/pi-uploads
+curl -u {{router_user}}:{{router_password}} http://{{router_ip}}/userRpm/StatusRpm.htm > /home/zsolt/Dropbox/pi-uploads/status.htm
+/home/zsolt/Applications/dropbox-uploader/dropbox_uploader.sh upload /home/zsolt/Dropbox/pi-uploads/status.htm pi-uploads/status.htm

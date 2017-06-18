@@ -1,0 +1,17 @@
+---
+- name: upload basic router status fetcher
+  template:
+    src: fetch_and_upload_basic_router_data.sh.j2
+    dest: /home/zsolt/Applications/fetch_and_upload_basic_router_data.sh
+    owner: zsolt
+    group: zsolt
+    mode: 0744
+  tags: ['router_status']
+
+- name: setup cron job
+  cron:
+    name: "upload router status"
+    minute: "0,30"
+    user: zsolt
+    job: "/home/zsolt/Applications/fetch_and_upload_basic_router_data.sh > /dev/null"
+  tags: ['router_status', 'cron']

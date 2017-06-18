@@ -1,10 +1,49 @@
 ---
-# install only security updates
-- name: Make a copy of security repos
-  shell: cat /etc/apt/sources.list|grep secu >/etc/apt/security.sources.list
+- name: create Applications folder
+  file:
+    path: /home/zsolt/Applications
+    state: directory
+    owner: zsolt
+    group: zsolt
+    mode: 0755
+  tags: ['install']
 
-- name: Update cache
-  apt: update_cache=yes
+- name: install dropbox uploader
+  become: True
+  become_user: zsolt
+  git:
+    repo: 'https://github.com/andreafabrizi/Dropbox-Uploader.git'
+    dest: /home/zsolt/Applications/dropbox-uploader
+  tags: ['install', 'dropbox-uploader']
 
-- name: Install security updates
-  shell: apt-get upgrade -oDir::Etc::SourceList=/etc/apt/security.sources.list --force-yes -y
+- name: set dropbox api key for dropbox uploader
+  template:
+    src: dot.dropbox_uploader.j2
+    dest: /home/zsolt/.dropbox_uploader
+    owner: zsolt
+    group: zsolt
+    mode: 0600
+  tags: ['install', 'dropbox-uploader']
+
+- name: install mutt
+  apt:
+    name: mutt
+  tags: ['install', 'email', 'mutt']
+
+- name: install postfix
+  apt:
+    name: postfix
+  tags: ['install', 'email', 'postfix']
+
+- name: apply postfix configuration
+  template:
+    src: main.cf.j2
+    dest: /etc/postfix/main.cf
+    mode: 0644
+  notify: restart postfix
+  tags: ['install', 'email', 'postfix']
+
+- name: install telnet
+  apt:
+    name: telnet
+  tags: ['install', 'telnet']
