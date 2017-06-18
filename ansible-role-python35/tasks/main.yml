@@ -1,5 +1,22 @@
 ---
 # downloads and installs python35
+
+- name: check installed python3 version
+  command: >
+    python3 --version
+    warn=no
+  changed_when: false
+  failed_when: false
+  check_mode: no
+  register: python3_installed_version
+  tags: ['python35', 'install']
+
+
+- name: check if the new version should be installed or not
+  set_fact:
+    install_python3: "{{ python3_installed_version.rc == 2 or (python3_installed_version.stdout.split(' ')[1] | version_compare(python3_version, '<'))}}"
+  tags: ['python35', 'install']
+
 - name: install libraries for compiling python
   yum:
     state: present
@@ -9,29 +26,33 @@
     - openssl
     - openssl-devel
     - libsqlite3x-devel
+  when: install_python3
 
 - name: download python source
   get_url:
-    url: "https://www.python.org/ftp/python/{{python_version}}/Python-{{python_version}}.tgz"
+    url: "https://www.python.org/ftp/python/{{python3_version}}/Python-{{python3_version}}.tgz"
     dest: /tmp/python.tar.gz
-    checksum: "md5:6192f0e45f02575590760e68c621a488"
+  when: install_python3
 
 - name: extract source
   unarchive:
     src: /tmp/python.tar.gz
     dest: /tmp
     remote_src: True
+  when: install_python3
 
 - name: configure
   shell: ./configure
   args:
-    chdir: "/tmp/Python-{{python_version}}"
+    chdir: "/tmp/Python-{{python3_version}}"
+  when: install_python3
 
 - name: make and install
   make:
-    chdir: "/tmp/Python-{{python_version}}"
+    chdir: "/tmp/Python-{{python3_version}}"
     target: install
   become: yes
+  when: install_python3
 
 - name: remove tmp folder and downloaded tar.gz
   file:
@@ -39,4 +60,5 @@
     state: absent
   with_items:
     - /tmp/Python.tar.xz
-    - "/tmp/Python-{{python_version}}"
+    - "/tmp/Python-{{python3_version}}"
+  when: install_python3
