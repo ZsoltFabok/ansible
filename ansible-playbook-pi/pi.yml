@@ -5,3 +5,4 @@
     - users
     - packages
     - management
+    - ansible-role-ntp

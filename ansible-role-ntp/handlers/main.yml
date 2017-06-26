@@ -1,0 +1,3 @@
+- name: restart
+  service: name=ntp state=restarted enabled=yes
+  tags: ['ntp']

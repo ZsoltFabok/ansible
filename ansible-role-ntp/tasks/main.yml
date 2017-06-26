@@ -1,0 +1,11 @@
+---
+- name: install
+  apt: name=ntp state=latest
+  tags: ['ntp']
+
+- name: set ntp.conf
+  template:
+    src: ntp.conf.j2
+    dest: /etc/ntp.conf
+  notify: restart
+  tags: ['ntp']
