@@ -1,0 +1,2 @@
+dependencies:
+  - {role: apache-commons-codec, commons_codec_version: 1.10}

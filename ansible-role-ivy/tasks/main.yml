@@ -1,0 +1,40 @@
+---
+- name: check which version is installed
+  shell: "ls -1v {{ant_home}}/lib/ivy-*.jar | tail -1 | gawk 'match($0,/ivy-(.+)\\.jar/, group) {print group[1]}'"
+  changed_when: false
+  failed_when: false
+  check_mode: no
+  register: current_version
+  tags: ['ivy']
+
+- name: check if the new version should be installed or not
+  set_fact:
+    install_ivy: "{{ (current_version.rc > 0) or (current_version.stderr_lines | length > 0) or (current_version.stdout | version_compare(ivy_version, '<'))}}"
+  tags: ['ivy']
+
+- block:
+  - name: download
+    get_url:
+      url: "http://archive.apache.org/dist/ant/ivy/{{ ivy_version }}/apache-ivy-{{ ivy_version }}-bin.tar.gz"
+      dest: "/tmp/apache-ivy-{{ivy_version}}-bin.tar.gz"
+    when: install_ivy
+    tags: ['ivy']
+
+  - name: extract ivy-{{ivy_version}}.jar to {{ant_home}}/lib
+    unarchive: 
+      copy: False
+      src: "/tmp/apache-ivy-{{ivy_version}}-bin.tar.gz"
+      dest: "{{ant_home}}/lib"
+      extra_opts:
+        - "--strip-components=1"
+        - "apache-ivy-{{ivy_version}}/ivy-{{ivy_version}}.jar"
+    when: install_ivy
+    tags: ['ivy']
+
+  always:
+  - name: delete downloaded files
+    file:
+      state: absent
+      path: "/tmp/apache-ivy-{{ivy_version}}-bin.tar.gz"
+    when: install_ivy
+    tags: ['ivy']
